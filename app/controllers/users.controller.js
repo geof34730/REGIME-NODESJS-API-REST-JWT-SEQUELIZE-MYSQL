@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-export class UserController {
+export class UsersController {
     static login = (req, res) => {
         return res.status(202).send({
             // error: err.message || `Unable to find user with id ${data.id}`,
