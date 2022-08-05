@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="eab89f18-40c2-43d2-9c91-be5a95cf5858" name="node.developpeur-flutter-freelance.com" url="http://node.developpeur-flutter-freelance.com/">
+        <fileTransfer rootFolder="/node.developpeur-flutter-freelance.com" host="ftp.developpeur-flutter-freelance.com" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
