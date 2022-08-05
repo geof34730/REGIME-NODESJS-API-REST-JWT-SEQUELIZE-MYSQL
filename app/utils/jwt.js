@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { SECRET_KEY_JWT } from "../config/config.js";
 /* Récupération du header bearer */
 export const extractBearerToken = headerValue => {
     if (typeof headerValue !== 'string') {
@@ -21,7 +20,7 @@ export const checkTokenMiddleware = (req, res, next) => {
         })
     }
     // Véracité du token
-    jwt.verify(token, SECRET_KEY_JWT, (err, decodedToken) => {
+    jwt.verify(token, process.env.SECRET_KEY_JWT, (err, decodedToken) => {
         if (err) {
             res.status(401).json({
                 error: 'Jeton défectueux',
