@@ -5,7 +5,11 @@
   "main": "app/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon exec babel-node app/index.js",
+    "dev": "nodemon --exec babel-node app/index.js",
+
+    "dev2" : "nodemon  app/index.js",
+
+
     "build": "babel app -d dist",
     "postinstall": "npm run build"
   },
