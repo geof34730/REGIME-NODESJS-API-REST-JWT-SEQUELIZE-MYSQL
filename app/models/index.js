@@ -1,1 +1,1 @@
-export { UserModel } from "./model.user.js";
+export { UserModel } from "./user.model.js";

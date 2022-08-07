@@ -1,9 +1,11 @@
 import dotenv  from "dotenv"
-import express from "express";
 dotenv.config()
+import "@babel/polyfill"
+import express from "express";
+
 import bodyParser from "body-parser";
 import cors from "cors";
-
+import morgan from 'morgan';
 import {
     UserRouter
 } from "./routes/index.js";
@@ -31,7 +33,7 @@ app.all("", function (req, res, next) {
 });
 app.get("/", (request, repsonse) => {
     repsonse.json({
-        message: "Welcome API Régime nodemon 4",
+        message: "Welcome API Régime nodemon dev",
     });
 });
 
