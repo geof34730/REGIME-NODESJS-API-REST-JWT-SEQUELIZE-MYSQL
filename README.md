@@ -11,7 +11,7 @@ Points d'entrées pour authentification/inscription
 
 ## Services nécessitant une authentification
 
-Services nécessitant qu'un jeton valide soit inclus dans l'en-tête de la demande. Le jeton est acquis à partir de l'authentification 'login'
+Services nécessitant qu'un jeton valide soit inclus dans l'en-tête de la demande. Le jeton est acquis à partir de l'authentification 'login Etape 2'
 
 **USER:**
 
