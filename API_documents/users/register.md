@@ -1,4 +1,4 @@
-## **Login Stage 1**
+## **REGISTER**
 
 Service d'inscription au site
 
@@ -36,10 +36,10 @@ Service d'inscription au site
       **Content:**
 
     ```json
-    {
-       message: "votre inscription à bien été pris en compte, un email vient de vous ètre envoyé à l'adresse [EMAIL USER] pour que vous confirmiez votre inscription",
-       code: 'UR1'  
-    }
+        {
+        message: "votre inscription à bien été pris en compte, un email vient de vous ètre envoyé à l'adresse [EMAIL USER] pour que vous confirmiez votre inscription",
+        code: 'UR1'  
+        }
     ```
 - **Error Response:**
 
@@ -57,20 +57,20 @@ Service d'inscription au site
 - **Code:** 403 FORBIDDEN <br />
   **Content:**
     ```json
-    {
-    error: "Vous êtes déjà inscrit, merci de vous identifier avec votre email et votre mot de passe.",
-    code: 'UR3'
-    }
+      {
+      error: "Vous êtes déjà inscrit, merci de vous identifier avec votre email et votre mot de passe.",
+      code: 'UR3'
+      }
     ```
   **OR**
 
 - **Code:** 500 NOT FOUND  <br />
   **Content:**
     ```json
-    {
-    error: [DESCRIPTION ERREUR],
-    code: 'UR4'
-    }
+      {
+      error: [DESCRIPTION ERREUR],
+      code: 'UR4'
+      }
     ```
   **OR**
 - **Code:** 500 NOT FOUND  <br />
