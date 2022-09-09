@@ -13,7 +13,9 @@ import {
 
 const app = express();
 const appPort = 8080;
-
+var corsOptions = {
+    origin: "http://localhost:61292/"
+};
 app.use(cors());
 //app.use(fileupload());
 app.use(express.json({ limit: "25mb" }));
@@ -23,6 +25,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.all("", function (req, res, next) {
+
+    console.log('GO');
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
     res.header(
@@ -33,7 +37,7 @@ app.all("", function (req, res, next) {
 });
 app.get("/", (request, repsonse) => {
     repsonse.json({
-        message: "Welcome API Régime nodemon dev",
+        message: "Welcome API Régime nodemon dev 2.0",
     });
 });
 

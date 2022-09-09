@@ -16,7 +16,7 @@ export const checkTokenMiddleware = (req, res, next) => {
     if (!token) {
         return res.status(403).json({
             error: 'Besoin d’un jeton',
-            code: 'JC1'
+            code: 'JTK1'
         })
     }
     // Véracité du token
@@ -24,7 +24,7 @@ export const checkTokenMiddleware = (req, res, next) => {
         if (err) {
             res.status(401).json({
                 error: 'Jeton défectueux',
-                code: 'JC2'
+                code: 'JTK2'
             })
         } else {
             return next()

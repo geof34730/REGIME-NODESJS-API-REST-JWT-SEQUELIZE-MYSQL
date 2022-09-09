@@ -17,6 +17,15 @@ const User = sequelize.define('user', {
             unique: false
         },
 
+        lastname:{
+            type: Sequelize.STRING,
+            unique: false
+        },
+        firstname:{
+            type: Sequelize.STRING,
+            unique: false
+        },
+
         email:{
             type: Sequelize.STRING,
             unique: true
@@ -48,7 +57,7 @@ const User = sequelize.define('user', {
         },
 
         imageprofil:{
-            type: Sequelize.BLOB,
+            type: Sequelize.TEXT,
             unique: false
         },
 
@@ -56,10 +65,33 @@ const User = sequelize.define('user', {
             type: Sequelize.UUIDV4,
             unique: false
         },
+        inscriptionvalide:{
+            type: Sequelize.BOOLEAN,
+            unique: false
+        },
+        codeForgetPassword:{
+            type:Sequelize.INTEGER,
+            primaryKey:false
+        },
+
+
+
     },
     {
         freezeTableName: true,
         timestamps:true
     });
-console.log(User === sequelize.models.User);
+//console.log(User === sequelize.models.User);
+
+User.prototype.toJsonReturnApi =  function (token) {
+    var values = Object.assign({}, this.get());
+    delete values.password;
+    delete values.id;
+    delete values.inscriptionvalide;
+    delete values.createdAt;
+    delete values.updatedAt;
+    values.token=token;
+    //values.imageprofil=values.imageprofil.base64;
+    return values;
+}
 export default User;
