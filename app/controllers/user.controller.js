@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-export async function loginStage1(req, res) {
+export async function LoginStage1(req, res) {
     try {
         let createdata = await User.findOne({where: {email: req.body.email}});
         return res.status(202).send({
@@ -30,7 +30,7 @@ export async function loginStage1(req, res) {
     }
 }
 
-export async function loginStage2(req, res) {
+export async function LoginStage2(req, res) {
     try {
         let data = await User.findOne({where: {email: req.body.email}});
         if (data != null) {
@@ -71,16 +71,9 @@ export async function loginStage2(req, res) {
             code: "ULP5",
         });
     }
-
-
-
-
-
-
-
 }
 
-export async function register(req, res) {
+export async function Register(req, res) {
     try {
         User.findOne({
             where: {
@@ -141,43 +134,125 @@ export async function register(req, res) {
     }
 }
 
-export async function passwordforget(req, res) {
+export async function PasswordForget(req, res) {
     try {
         let codeGenerate=Math.floor(100000 + Math.random() * 900000);
         await User.update({codeForgetPassword: codeGenerate,},{where: { email: req.body.email },});
         let selectdata = await User.findOne({where: {email: req.body.email}});
-        let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() + 30); // timestamp
+        let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() + parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
         dateExpirationCode = new Date(dateExpirationCode); // Date object
-
         const mailOptions = {
             from: process.env.EMAIL_SENDER,
             to: selectdata.email,
             subject: 'TeamWeight - Votre code de réinitialisation de mot de passe',
-            text: 'Saisissez le code <b>'+codeGenerate+'</b> pour réinitialiser votre mot de passe.'
+            text: 'Saisissez le code '+codeGenerate+' pour réinitialiser votre mot de passe.',
+            html: 'Saisissez le code <b>'+codeGenerate+'</b> pour réinitialiser votre mot de passe.',
         };
+        if(process.env.SEND_MAIL=="true") {
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    return res.status(500).send({
+                        error: error,
+                        code: "UPF1",
+                    });
+                } else {
+                   return res.status(202).send({
+                        email: selectdata.email,
+                        timeCodeValidate: dateExpirationCode.getTime(),
+                        code: "UPF2",
+                    });
+                }
+            });
+        }
+        else {
+            console.log('CODE GENERATE')
+            console.log(codeGenerate);
+            return res.status(202).send({
+                email: selectdata.email,
+                timeCodeValidate: dateExpirationCode.getTime(),
+                code: "UPF2",
+            });
+        }
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UPF3",
+        });
+    }
+}
 
-        transporter.sendMail(mailOptions, function(error, info){
-            if (error) {
-                return res.status(500).send({
-                    error: error,
-                    code: "UPF1",
+export async function PasswordCodeReset(req, res) {
+
+    try {
+        let selectdata = await User.findOne({where: {email: req.body.email}});
+        let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() +  parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
+        dateExpirationCode = new Date(dateExpirationCode);
+        let dateSend = new Date();
+        if(dateExpirationCode<dateSend){
+            return res.status(401).send({
+                error: "Code Expiré",
+                code: "UPCR1",
+            });
+        }
+        else {
+            if (selectdata.codeForgetPassword != req.body.code) {
+                return res.status(401).send({
+                    error: "Code non valide",
+                    code: "UPCR2",
                 });
             } else {
                 return res.status(202).send({
                     email: selectdata.email,
                     timeCodeValidate: dateExpirationCode.getTime(),
-                    code: "UPF2",
+                    codereset: selectdata.codeForgetPassword,
+                    code: "UPCR3",
                 });
             }
-        });
-
-
+        }
 
     } catch (err) {
-        console.log(err);
         return res.status(500).send({
             error: err,
-            code: "UPF3",
+            code: "UPCR4",
+        });
+    }
+}
+
+export async function PasswordNew(req, res) {
+    try {
+        let selectdata = await User.findOne({where: {email: req.body.email}});
+        let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() +  parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
+        dateExpirationCode = new Date(dateExpirationCode);
+        let dateSend = new Date();
+
+        if(dateExpirationCode<dateSend){
+            return res.status(401).send({
+                error: "Code Expiré",
+                code: "UPCN1",
+            });
+        }
+        else{
+            if (selectdata.codeForgetPassword!=req.body.code) {
+                return res.status(401).send({
+                    error: "Code non valide",
+                    code: "UPCN2",
+                });
+            }
+            else{
+                bcrypt.hash(req.body.password, 10, (err, hash) => {
+                    User.update({password: hash}, {where: {email: req.body.email},});
+                    return res.status(200).send({
+                        message: "Votre mot de passe à bien été modifié",
+                        code: "UPCN3",
+                    });
+                });
+            }
+        }
+
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UPN4",
         });
     }
 }

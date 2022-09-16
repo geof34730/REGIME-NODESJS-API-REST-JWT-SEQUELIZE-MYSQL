@@ -73,9 +73,6 @@ const User = sequelize.define('user', {
             type:Sequelize.INTEGER,
             primaryKey:false
         },
-
-
-
     },
     {
         freezeTableName: true,
