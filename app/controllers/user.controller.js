@@ -14,6 +14,112 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+export async function Register(req, res) {
+    console.log("ssss");
+    try {
+        User.findOne({
+            where: {
+                email: req.body.email
+            }
+        })
+            .then(user => {
+                if (!user) {
+                    console.log(req.body);
+                    bcrypt.hash(req.body.password, 10, (err, hash) => {
+                        const uuidGenerate = uuidv4()
+                        const userData = {
+                            uuid: uuidGenerate,
+                            pseudo: req.body.pseudo,
+                            email: req.body.email,
+                            firstname: req.body.firstname,
+                            lastname: req.body.lastname,
+                            password: hash,
+                            profil: "familyAdmin",
+                         //   datenaissance: req.body.datenaissance,
+                            sexe: req.body.sexe,
+                            taille: req.body.taille,
+                            uuidfamillyadmin: uuidGenerate,
+                            imageprofil:req.body.imageprofil,
+                        }
+                        User.create(userData)
+                            .then(user => {
+                                return res.status(200).send({
+                                    message: "Votre inscription à bien été pris en compte, vous pouvez dès à présent vous idientifier.",
+                                    code: 'UR1'
+                                });
+                            })
+                            .catch(err => {
+                                return res.status(500).send({
+                                    error: err,
+                                    code: "UR2",
+                                });
+                            })
+                    })
+                } else {
+                    return res.status(403).send({
+                        error: "Vous êtes déjà inscrit, merci de vous identifier avec votre email et votre mot de passe.",
+                        code: "UR3",
+                    });
+                }
+            })
+            .catch(err => {
+                return res.status(500).send({
+                    error: err,
+                    code: "UR4",
+                });
+            })
+
+
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send({
+            error: err,
+            code: "UR5",
+        });
+    }
+}
+
+export async function ValidateInscription(req, res) {
+
+    try {
+        let selectdata = await User.findOne({where: {email: req.body.email}});
+        let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() +  parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
+        dateExpirationCode = new Date(dateExpirationCode);
+        let dateSend = new Date();
+        if(dateExpirationCode<dateSend){
+            return res.status(401).send({
+                error: "Code Expiré",
+                code: "UPCR1",
+            });
+        }
+        else {
+            if (selectdata.codeForgetPassword != req.body.code) {
+                return res.status(401).send({
+                    error: "Code non valide",
+                    code: "UPCR2",
+                });
+            } else {
+                console.log('change statut inscription')
+
+                 User.update({inscriptionvalide: 1}, {where: {email: req.body.email},});
+
+                return res.status(202).send({
+                    email: selectdata.email,
+                    timeCodeValidate: dateExpirationCode.getTime(),
+                    codereset: selectdata.codeForgetPassword,
+                    code: "UPCR3",
+                });
+            }
+        }
+
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UPCR4",
+        });
+    }
+}
+
 export async function LoginStage1(req, res) {
     try {
         let createdata = await User.findOne({where: {email: req.body.email}});
@@ -55,7 +161,7 @@ export async function LoginStage2(req, res) {
             } else {
                 return res.status(401).send({
                     error: "Login et/ou mot de passe invalide",
-                    code: "UL3",
+                    code: "ULP3",
                 });
             }
         } else {
@@ -73,81 +179,36 @@ export async function LoginStage2(req, res) {
     }
 }
 
-export async function Register(req, res) {
-    try {
-        User.findOne({
-            where: {
-                email: req.body.email
-            }
-        })
-            .then(user => {
-                if (!user) {
-                    bcrypt.hash(req.body.password, 10, (err, hash) => {
-                        const uuidGenerate = uuidv4()
-                        const userData = {
-                            uuid: uuidGenerate,
-                            pseudo: req.body.pseudo,
-                            email: req.body.email,
-                            password: hash,
-                            profil: "familyAdmin",
-                            datenaissance: req.body.datenaissance,
-                            sexe: req.body.sexe,
-                            taille: req.body.taille,
-                            uuidfamillyadmin: uuidGenerate,
-                            imageprofil:req.body.imageprofil,
-                        }
-                        User.create(userData)
-                            .then(user => {
-                                return res.status(200).send({
-                                    message: "Votre inscription à bien été pris en compte, un email vient de vous ètre envoyé à l'adresse "+req.body.email+" pour que vous confirmiez votre inscription",
-                                    code: 'UR1'
-                                });
-                            })
-                            .catch(err => {
-                                return res.status(500).send({
-                                    error: err,
-                                    code: "UR2",
-                                });
-                            })
-                    })
-                } else {
-                    return res.status(403).send({
-                        error: "Vous êtes déjà inscrit, merci de vous identifier avec votre email et votre mot de passe.",
-                        code: "UR3",
-                    });
-                }
-            })
-            .catch(err => {
-                return res.status(500).send({
-                    error: err,
-                    code: "UR4",
-                });
-            })
+export async function SendCode(req, res) {
+    console.log(req.body);
+    let mailOptions = {};
 
 
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send({
-            error: err,
-            code: "UR5",
-        });
-    }
-}
-
-export async function PasswordForget(req, res) {
     try {
         let codeGenerate=Math.floor(100000 + Math.random() * 900000);
         await User.update({codeForgetPassword: codeGenerate,},{where: { email: req.body.email },});
         let selectdata = await User.findOne({where: {email: req.body.email}});
         let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() + parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
         dateExpirationCode = new Date(dateExpirationCode); // Date object
-        const mailOptions = {
-            from: process.env.EMAIL_SENDER,
-            to: selectdata.email,
-            subject: 'TeamWeight - Votre code de réinitialisation de mot de passe',
-            text: 'Saisissez le code '+codeGenerate+' pour réinitialiser votre mot de passe.',
-            html: 'Saisissez le code <b>'+codeGenerate+'</b> pour réinitialiser votre mot de passe.',
-        };
+
+        if(req.body.mail=="valideInscription") {
+             mailOptions = {
+                from: process.env.EMAIL_SENDER,
+                to: selectdata.email,
+                subject: "TeamWeight - Votre code de validation d'inscription",
+                text: 'Saisissez le code ' + codeGenerate + ' pour valider votre inscription.',
+                html: 'Saisissez le code <b>' + codeGenerate + '</b> pour valider votre inscription.',
+            };
+        }
+            else{
+                mailOptions = {
+                from: process.env.EMAIL_SENDER,
+                to: selectdata.email,
+                subject: 'TeamWeight - Votre code de réinitialisation de mot de passe',
+                text: 'Saisissez le code ' + codeGenerate + ' pour réinitialiser votre mot de passe.',
+                html: 'Saisissez le code <b>' + codeGenerate + '</b> pour réinitialiser votre mot de passe.',
+            };
+        }
         if(process.env.SEND_MAIL=="true") {
             transporter.sendMail(mailOptions, function (error, info) {
                 if (error) {
@@ -165,8 +226,6 @@ export async function PasswordForget(req, res) {
             });
         }
         else {
-            console.log('CODE GENERATE')
-            console.log(codeGenerate);
             return res.status(202).send({
                 email: selectdata.email,
                 timeCodeValidate: dateExpirationCode.getTime(),
@@ -182,7 +241,6 @@ export async function PasswordForget(req, res) {
 }
 
 export async function PasswordCodeReset(req, res) {
-
     try {
         let selectdata = await User.findOne({where: {email: req.body.email}});
         let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() +  parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
