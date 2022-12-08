@@ -15,7 +15,6 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function Register(req, res) {
-    console.log("ssss");
     try {
         User.findOne({
             where: {
@@ -35,7 +34,7 @@ export async function Register(req, res) {
                             lastname: req.body.lastname,
                             password: hash,
                             profil: "familyAdmin",
-                         //   datenaissance: req.body.datenaissance,
+                            datenaissance: req.body.datenaissance,
                             sexe: req.body.sexe,
                             taille: req.body.taille,
                             uuidfamillyadmin: uuidGenerate,
@@ -79,8 +78,109 @@ export async function Register(req, res) {
     }
 }
 
-export async function ValidateInscription(req, res) {
+export async function AddUserFamily(req, res) {
+    try {
+        const uuidGenerate = uuidv4()
+        const userData = {
+            uuid: uuidGenerate,
+            pseudo: req.body.pseudo,
+            email: null,
+            firstname: req.body.firstname,
+            lastname: req.body.lastname,
+            profil: "familyUser",
+            datenaissance: req.body.datenaissance,
+            sexe: req.body.sexe,
+            taille: req.body.taille,
+            uuidfamillyadmin: req.body.uuidfamillyadmin,
+            imageprofil: req.body.imageprofil
+        }
+        User.create(userData)
+            .then(async user => {
+            console.log(req.headers.authorization);
+            let data = await User.findOne({where: {uuid: req.body.uuidfamillyadmin}});
+            let dataUser = data.toJsonReturnApi(req.headers.authorization);
+            dataUser["usersFamily"]=await getUsersFamily(req.body.uuidfamillyadmin)
+                return res.status(200).send({
+                    message: ("Utilisateur ajouté à votre Team"),
+                    code: 'UA1',
+                    user: dataUser
+                });
+        })
+        .catch(err => {
+            return res.status(500).send({
+                error: err,
+                code: "UA2",
+            });
+        })
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UA3",
+        });
+    }
+}
 
+export async function UpdateUserFamily(req, res) {
+    try {
+       const userData = {
+            pseudo: req.body.pseudo,
+            firstname: req.body.firstname,
+            lastname: req.body.lastname,
+            datenaissance: req.body.datenaissance,
+            sexe: req.body.sexe,
+            taille: req.body.taille,
+            imageprofil: req.body.imageprofil
+        }
+         User.update(userData, {where: {uuid: req.body.uuid},})
+             .then(async user => {
+                let data = await User.findOne({where: {uuid: req.body.uuidfamillyadmin}});
+                let dataUser = data.toJsonReturnApi(req.headers.authorization);
+                dataUser["usersFamily"]=await getUsersFamily(req.body.uuidfamillyadmin)
+                return res.status(200).send({
+                    message: "Utilisateur mise à jour",
+                    code: 'UU1',
+                    user: dataUser
+                });
+            })
+            .catch(err => {
+                    return res.status(500).send({
+                        error: err,
+                        code: "UU2",
+                    });
+                })
+
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UU3",
+        });
+    }
+}
+
+export async function DeleteUserFamily(req, res) {
+    try {
+        User.destroy({
+              where: { uuid: req.body.uuid },
+            }).then(async user => {
+                let data = await User.findOne({where: {uuid: req.body.uuidfamillyadmin}});
+                let dataUser = data.toJsonReturnApi(req.headers.authorization);
+                dataUser["usersFamily"] = await getUsersFamily(req.body.uuidfamillyadmin)
+                return res.status(200).send({
+                    message: "utilisateur supprimé",
+                    code: "UD1",
+                    user: dataUser
+                });
+            }
+        );
+    } catch (err) {
+        return res.status(500).send({
+            error: err,
+            code: "UU3",
+        });
+    }
+}
+
+export async function ValidateInscription(req, res) {
     try {
         let selectdata = await User.findOne({where: {email: req.body.email}});
         let dateExpirationCode=selectdata.updatedAt.setMinutes(selectdata.updatedAt.getMinutes() +  parseInt(process.env.TIMER_RESET_PASSWORD_MINUTES)); // timestamp
@@ -147,9 +247,11 @@ export async function LoginStage2(req, res) {
                     const token = jwt.sign({ uuid: data.uuid,profil: data.profil }, process.env.SECRET_KEY_JWT, {
                         expiresIn: "3 hours",
                     });
+                   let dataUser = await data.toJsonReturnApi(token);
+                   dataUser["usersFamily"]=await getUsersFamily(dataUser.uuidfamillyadmin)
                     return  res.status(200).send({
                         code: "ULP1",
-                        user: data.toJsonReturnApi(token),
+                        user: dataUser
                     });
                 } else {
                     //compte non actif
@@ -180,10 +282,7 @@ export async function LoginStage2(req, res) {
 }
 
 export async function SendCode(req, res) {
-    console.log(req.body);
     let mailOptions = {};
-
-
     try {
         let codeGenerate=Math.floor(100000 + Math.random() * 900000);
         await User.update({codeForgetPassword: codeGenerate,},{where: { email: req.body.email },});
@@ -314,3 +413,31 @@ export async function PasswordNew(req, res) {
         });
     }
 }
+
+export async function getUsersFamily(uuidfamillyadmin) {
+    try {
+        let data = await User.findAll({
+        where: {
+            uuidfamillyadmin: uuidfamillyadmin
+        },
+            attributes: [
+                'uuid',
+                'pseudo',
+                'firstname',
+                'lastname',
+                'email',
+                'profil',
+                'datenaissance',
+                'sexe',
+                'taille',
+                'imageprofil',
+                'uuidfamillyadmin'
+           ]
+        });
+        return  data;
+    } catch (err) {
+      return err;
+    }
+}
+
+

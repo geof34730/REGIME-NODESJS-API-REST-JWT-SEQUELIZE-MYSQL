@@ -89,9 +89,13 @@ User.prototype.toJsonReturnApi =  function (token) {
     delete values.updatedAt;
     delete values.codeForgetPassword;
     values.token=token;
-    //values.imageprofil=values.imageprofil.base64;
-
-    console.log(values)
     return values;
 }
+
+
+
+
+
+
+
 export default User;
